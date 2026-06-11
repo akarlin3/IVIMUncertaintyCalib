@@ -9,7 +9,7 @@ in `npe/` run against the committed model (`npe/npe_posterior_setB.pt`).
 
 | # | Severity | Comment | Status |
 |---|----------|---------|--------|
-| 1 | MEDIUM | Figure 5 is a single in-vivo case (N=1) with a 54.7%-railed NLLS reference | **Decision required (data-blocked):** only one in-vivo abdominal dataset is available locally; cannot add cases. Drop-in text supplied for both resolutions (demote to supplementary vs. retain as a single labelled illustration). |
+| 1 | MEDIUM | Figure 5 is a single in-vivo case (N=1) with a 54.7%-railed NLLS reference | **Resolved — demoted to supplementary (Supplementary Figure S4).** New committed generator + figure reproduce the case (54.7% NLLS railing, 1618 high-SNR ROI voxels); drop-in supplementary caption and main-text replacement line below. |
 | 2 | MEDIUM | Generality across priors untested (architecture S1 and density S2 are controlled; prior choice is not) | Acknowledged in-text (done in round 1); tightened limitation text below, plus a full spec for the optional prior-sensitivity ablation that would convert it to a result. |
 | 3 | LOW | Timing benchmark (418 ms / 0.956 s / 635 s per 1,000 voxels) lacks methods: hardware, implementation parity | **Done** — new methods-documented benchmark (`npe/run_h_benchmark.py`, `npe/benchmark_timings.csv`), drop-in methods note, and a fix for a warm-up bug in the ad-hoc script that had inflated the NPE number ~3–6×. |
 | 4 | LOW | Gaussian CRLB approximation weakest for skewed D*, where the central claims sit | Disclosed in Limitations (done); tightened drop-in text below, plus a spec for the optional sampling-based bound on a low-SNR subset. |
@@ -22,60 +22,53 @@ in `npe/` run against the committed model (`npe/npe_posterior_setB.pt`).
 NLLS reference, in the main text. To fully close: add 1–2 more abdominal cases, or
 demote to supplementary. This is the highest-value remaining lift."*
 
-**Assessment.** This is the highest-value item, but the "add 1–2 more abdominal
-cases" path is **blocked by data availability, not by code**. The repository
-ships exactly one in-vivo abdominal acquisition
-(`download/Data/abdomen.nii.gz`, with `mask_abdomen_homogeneous.nii.gz` and
-`abdomen.bval`) plus the brain dataset; there is no second or third abdominal
-acquisition locally, and none is available from the open OSIPI data we draw on.
-The batch pipeline is already written to pick up any additional cases the moment
-they are provided — `fig5_batch.py` globs `download/Data/abdomen_case*.nii.gz`
-and processes every match through the identical NPE-vs-NLLS comparison — so adding
-cases is a data-supply step, not an analysis step. **If 1–2 further abdominal
-IVIM acquisitions (4D NIfTI + b-value file + an ROI mask) can be provided, the
-multi-case figure regenerates automatically with no code changes.**
+**Resolution: demoted to supplementary (Supplementary Figure S4).** The "add 1–2
+more abdominal cases" path is blocked by data, not code — the repository ships
+exactly one in-vivo abdominal acquisition (`download/Data/abdomen.*`) and none is
+available from the open OSIPI data we draw on (`fig5_batch.py` is already written
+to auto-ingest any `abdomen_case*.nii.gz`, so cases can be added later with no code
+change). The case has therefore been demoted from the main text to the supplement,
+which removes a single-subject anecdote without weakening any quantitative claim:
+every load-bearing result (the CRLB efficiency audit, the held-out-b
+miscalibration, the OOD gate) rests on the simulation study and the gray-matter
+brain analysis, not on the abdominal case.
 
-Absent that data, the actionable resolution is editorial, and there are two
-defensible options. The recommendation is **(A) demote to supplementary**, because
-it removes a single-subject anecdote from the main text without weakening any
-quantitative claim — every load-bearing result (the CRLB efficiency audit, the
-held-out-b miscalibration, the OOD gate) rests on the simulation study and the
-gray-matter brain analysis, not on the abdominal case. Option (B) retains it in
-the main text but only if it is explicitly labelled as a single mechanistic
-illustration rather than evidence.
+A committed generator reproduces the figure as a supplementary panel:
+`npe/run_s4_figure.py` →
+`figures/manuscript/figS4_invivo_illustration.{png,pdf,csv}`. It confirms the
+reviewer's numbers exactly — **54.7% of the 1618 high-SNR ROI voxels have a
+boundary-railed NLLS D\* estimate** — and frames the railing **as a result**, not a
+defect: it is the per-voxel signature of the same weak D\* identifiability the
+paper quantifies in simulation (the NLLS D\* hits a fit bound because D\* is weakly
+identified from the clinical-sparse acquisition). Railed voxels are excluded
+before the NPE-vs-NLLS spread comparison, so the reported ratios (SD 0.27 all /
+0.41 non-railed; IQR 0.21 / 0.38) are not contaminated by the rail.
 
-On the 54.7% NLLS railing specifically: this is itself a finding, not a defect of
-the figure — it is the per-voxel manifestation of the well-posedness problem the
-paper is about (the NLLS D\* estimate hits a bound in a majority of voxels because
-D\* is weakly identified from the clinical-sparse acquisition). The comparison in
-`fig5_batch.py` already excludes boundary-railed NLLS voxels before computing the
-SD/IQR ratios, so the reported spread comparison is not contaminated by the rail;
-the railing fraction should be **reported as a result** wherever the figure lands.
+**Proposed manuscript edit — supplementary caption (final).**
 
-**Proposed manuscript edit — Option A (recommended), supplementary caption.**
+> *Supplementary Figure S4. Single-subject in-vivo illustration (abdomen, N = 1).
+> NPE and biexponential-NLLS D\* maps for one open IVIM acquisition. In 54.7% of
+> high-SNR ROI voxels the NLLS D\* estimate is boundary-railed — the per-voxel
+> signature of the weak D\* identifiability characterised in simulation (Figures
+> 2–3); these voxels are excluded before the spread comparison. The case is shown
+> as a qualitative illustration of that mechanism in vivo and is not used to
+> support any quantitative claim; N = 1 precludes population inference.*
 
-> *Supplementary Figure S4. Single-subject in-vivo illustration (abdomen). NPE and
-> NLLS D\* maps for one open IVIM acquisition. In 54.7% of high-SNR ROI voxels the
-> NLLS D\* estimate is boundary-railed — the per-voxel signature of the weak D\*
-> identifiability characterised in simulation (Figures 2–3); these voxels are
-> excluded before the spread comparison. The case is shown as a qualitative
-> illustration of that mechanism in vivo and is not used to support any
-> quantitative claim; N = 1 precludes population inference.*
+**Proposed manuscript edit — main-text replacement (final).** Remove main-text
+Figure 5 and replace its reference with: *"A single in-vivo abdominal case is
+shown in Supplementary Figure S4 as a qualitative illustration of the same
+weak-identifiability signature (the NLLS D\* reference boundary-rails in 54.7% of
+high-SNR ROI voxels); it is not used for inference."*
 
-And in the main text, replace the Figure 5 reference with: *"A single in-vivo
-abdominal case is shown in Supplementary Figure S4 as a qualitative illustration
-of the same weak-identifiability signature; it is not used for inference."*
+**Reproduce.**
+```
+.venv/bin/python npe/run_s4_figure.py
+```
 
-**Proposed manuscript edit — Option B (retain in main text).** Keep the figure but
-prepend to its caption: *"This single subject (N = 1) is a mechanistic
-illustration, not evidence; it shows in one in-vivo dataset the weak-D\*
-identifiability quantified in simulation. The NLLS reference is boundary-railed in
-54.7% of high-SNR ROI voxels — itself the per-voxel signature of that weak
-identifiability — and these voxels are excluded before the NPE-vs-NLLS spread
-comparison."*
-
-Existing artifacts: `fig5_batch.py` (multi-case-ready batch pipeline),
-`download/Data/abdomen.*`, `roi_hi_dstar.csv`.
+New committed artifacts: `npe/run_s4_figure.py`,
+`figures/manuscript/figS4_invivo_illustration.{png,pdf,csv}`. The multi-case batch
+pipeline (`fig5_batch.py`) remains available should further abdominal acquisitions
+be supplied later.
 
 ---
 
@@ -250,11 +243,13 @@ Existing artifacts: `npe/run_e_efficiency.py` (CRLB grid + SNR sweep),
 
 | Item | Code / data committed | Manuscript action |
 |---|---|---|
-| 1 (Fig 5) | none possible without new in-vivo data; `fig5_batch.py` already multi-case-ready | **Editorial decision required** — drop-in text for demote-to-supplementary (recommended) and retain-as-illustration both supplied |
+| 1 (Fig 5) | `npe/run_s4_figure.py`, `figures/manuscript/figS4_invivo_illustration.{png,pdf,csv}` | **Resolved — demoted to Supplementary Figure S4**; drop-in supplementary caption + main-text replacement supplied |
 | 2 (priors) | reuses S1/S2 machinery; optional ablation fully specified | tightened Limitations text (drop-in) |
 | 3 (timing) | `npe/run_h_benchmark.py`, `npe/benchmark_timings.csv` | drop-in methods note (drop-in); warm-up bug fixed |
 | 4 (CRLB) | optional bound specified against existing `run_e_efficiency.py` | tightened Limitations text (drop-in) |
 
-The single item that cannot be closed from this side is **Figure 5**: it needs
-either 1–2 additional in-vivo abdominal acquisitions (after which the figure
-regenerates automatically) or your sign-off to demote it to the supplement.
+All four items are now addressed from the repository side. Figure 5 has been
+demoted to **Supplementary Figure S4** (committed generator + figure); the only
+remaining manuscript actions are the drop-in text insertions above. Should further
+in-vivo abdominal acquisitions become available, `fig5_batch.py` regenerates a
+multi-case version with no code change.
